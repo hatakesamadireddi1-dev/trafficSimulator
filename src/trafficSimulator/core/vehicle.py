@@ -12,7 +12,7 @@ class Vehicle:
 
         # Calculate properties
         self.init_properties()
-        
+
     def set_default_config(self):    
         self.id = uuid.uuid4()
 
@@ -36,24 +36,32 @@ class Vehicle:
         self._v_max = self.v_max
 
     def update(self, lead, dt):
+        """Update position and velocity using IDM. lead can be a real vehicle or a signal phantom."""
         # Update position and velocity
-        if self.v + self.a*dt < 0:
-            self.x -= 1/2*self.v*self.v/self.a
+        if self.v + self.a * dt < 0:
+            self.x -= 1 / 2 * self.v * self.v / self.a
             self.v = 0
         else:
-            self.v += self.a*dt
-            self.x += self.v*dt + self.a*dt*dt/2
-        
-        # Update acceleration
+            self.v += self.a * dt
+            self.x += self.v * dt + self.a * dt * dt / 2
+
+        # Update acceleration via IDM
         alpha = 0
         if lead:
             delta_x = lead.x - self.x - lead.l
             delta_v = self.v - lead.v
 
-            alpha = (self.s0 + max(0, self.T*self.v + delta_v*self.v/self.sqrt_ab)) / delta_x
+            # Guard against zero or negative gap (phantom exactly at
+            # vehicle position at initialisation).  A tiny positive gap
+            # keeps alpha finite and lets normal braking take over.
+            if delta_x <= 0:
+                delta_x = 0.001
 
-        self.a = self.a_max * (1-(self.v/self.v_max)**4 - alpha**2)
+            alpha = (
+                self.s0 + max(0, self.T * self.v + delta_v * self.v / self.sqrt_ab)
+            ) / delta_x
 
-        if self.stopped: 
-            self.a = -self.b_max*self.v/self.v_max
-        
+        self.a = self.a_max * (1 - (self.v / self.v_max) ** 4 - alpha**2)
+
+        if self.stopped:
+            self.a = -self.b_max * self.v / self.v_max

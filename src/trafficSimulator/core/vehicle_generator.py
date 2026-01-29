@@ -36,7 +36,7 @@ class VehicleGenerator:
     def update(self, simulation):
         """Add vehicles"""
         if simulation.t - self.last_added_time >= 60 / self.vehicle_rate:
-            print('adding vehicle')
+            # If time elasped after last added vehicle is
             # If time elasped after last added vehicle is
             # greater than vehicle_period; generate a vehicle
             segment = simulation.segments[self.upcoming_vehicle.path[0]]      
